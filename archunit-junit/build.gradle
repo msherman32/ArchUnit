@@ -21,6 +21,8 @@ dependencies {
 configureSlowTestsFor this
 
 shadowJar {
+    exclude 'META-INF/**'
+
     dependencies {
         exclude(project(':archunit'))
         exclude(dependency(dependency.junit))
