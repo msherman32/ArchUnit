@@ -14,6 +14,7 @@ dependencies {
 addTestJarTo this
 
 test {
+    systemProperty "archunit.visual.report.dir", System.getProperty("archunit.visual.report.dir")
     if (!project.hasProperty('example')) {
         useJUnit {
             excludeCategories 'com.tngtech.archunit.exampletest.Example'
