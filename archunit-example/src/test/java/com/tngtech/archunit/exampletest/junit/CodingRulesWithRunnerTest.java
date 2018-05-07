@@ -6,19 +6,23 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchUnitRunner;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.visual.VisualExtension;
+import org.junit.AfterClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS;
-import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS;
-import static com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING;
-import static com.tngtech.archunit.library.GeneralCodingRules.USE_JAVA_UTIL_LOGGING;
+import static com.tngtech.archunit.library.GeneralCodingRules.*;
 
 @Category(Example.class)
 @RunWith(ArchUnitRunner.class)
 @AnalyzeClasses(packages = "com.tngtech.archunit.example")
 public class CodingRulesWithRunnerTest {
+
+    @ArchTest
+    public static void setJavaClasses(JavaClasses classes) {
+        VisualExtension.setClasses(classes);
+    }
 
     @ArchTest
     public static final ArchRule NO_ACCESS_TO_STANDARD_STREAMS = NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS;
@@ -32,5 +36,10 @@ public class CodingRulesWithRunnerTest {
     @ArchTest
     public static void no_java_util_logging_as_method(JavaClasses classes) {
         noClasses().should(USE_JAVA_UTIL_LOGGING).check(classes);
+    }
+
+    @AfterClass
+    public static void createVisualization() {
+        VisualExtension.createVisualization();
     }
 }
