@@ -6,23 +6,24 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchUnitRunner;
 import com.tngtech.archunit.lang.ArchRule;
-import com.tngtech.archunit.visual.VisualExtension;
-import org.junit.AfterClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.GeneralCodingRules.*;
 
+//import com.tngtech.archunit.visual.VisualExtension;
+//import org.junit.AfterClass;
+
 @Category(Example.class)
 @RunWith(ArchUnitRunner.class)
 @AnalyzeClasses(packages = "com.tngtech.archunit.example")
 public class CodingRulesWithRunnerTest {
 
-    @ArchTest
+    /*@ArchTest
     public static void setJavaClasses(JavaClasses classes) {
         VisualExtension.setClasses(classes);
-    }
+    }*/
 
     @ArchTest
     public static final ArchRule NO_ACCESS_TO_STANDARD_STREAMS = NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS;
@@ -38,8 +39,8 @@ public class CodingRulesWithRunnerTest {
         noClasses().should(USE_JAVA_UTIL_LOGGING).check(classes);
     }
 
-    @AfterClass
+    /*@AfterClass
     public static void createVisualization() {
         VisualExtension.createVisualization();
-    }
+    }*/
 }
