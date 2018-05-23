@@ -28,9 +28,12 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ClassesTransformer;
 import com.tngtech.archunit.lang.Priority;
+import com.tngtech.archunit.lang.syntax.elements.ClassesShould;
 import com.tngtech.archunit.lang.syntax.elements.GivenClass;
 import com.tngtech.archunit.lang.syntax.elements.GivenClasses;
 import com.tngtech.archunit.lang.syntax.elements.GivenObjects;
+
+import java.lang.Class;
 
 import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
 import static com.tngtech.archunit.lang.Priority.MEDIUM;
@@ -63,8 +66,10 @@ public final class ArchRuleDefinition {
 
     @PublicAPI(usage = ACCESS)
     public static GivenClasses classes() {
+        //returns a creator
         return priority(MEDIUM).classes();
     }
+
 
     @PublicAPI(usage = ACCESS)
     public static GivenClasses noClasses() {
@@ -73,6 +78,10 @@ public final class ArchRuleDefinition {
 
     public static GivenClass theClass(Class<?> clazz) {
         return priority(MEDIUM).theClass(clazz);
+    }
+
+    public static GivenClass theClass(String className) {
+        return priority(MEDIUM).theClass(className);
     }
 
     public static final class Creator {
@@ -129,7 +138,44 @@ public final class ArchRuleDefinition {
             };
             return new GivenClassInternal(priority, theClass, Functions.<ArchCondition<JavaClass>>identity());
         }
+
+        public GivenClass theClass(final String className) {
+            final Class<?> classInSystem;
+            //there are de
+            try {
+                Class.forName(className); //TODO: is this cheating???
+            } catch (java.lang.ClassNotFoundException exception) {
+
+            }
+            classInSystem = Class.forName(className);
+            ClassesTransformer<JavaClass> theClass = new AbstractClassesTransformer<JavaClass>("the class " + classInSystem.getName()) {
+                @Override
+                public Iterable<JavaClass> doTransform(JavaClasses classes) {
+                    return Collections.singleton(classes.get(classInSystem));
+                }
+            };
+            return new GivenClassInternal(priority, theClass, Functions.<ArchCondition<JavaClass>>identity());
+
+
+//            Class theClass = (Class) (clazz + ".class");
+//            JavaClass theClass = new ClassFileImporter().importClass(clazz);
+
+            /**GivenClassInternal takes in a priority and a transformer
+             *
+             * I would like to be able to look at all the classes in the set from the top level
+             * and get the one corresponding to the String clazz, then return a GivenClass
+             * based on this information
+             */
+        }
+
+
+        public GivenClass noClass(final Class<?> clazz) {
+            return null; //todo: fix this
+        }
+
+
     }
+
 
     private static <T> Function<ArchCondition<T>, ArchCondition<T>> negateCondition() {
         return new Function<ArchCondition<T>, ArchCondition<T>>() {
