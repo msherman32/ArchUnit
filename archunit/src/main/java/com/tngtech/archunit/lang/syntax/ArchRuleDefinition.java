@@ -15,15 +15,20 @@
  */
 package com.tngtech.archunit.lang.syntax;
 
+import java.util.Collections;
+
 import com.tngtech.archunit.PublicAPI;
 import com.tngtech.archunit.base.Function;
+import com.tngtech.archunit.base.Function.Functions;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.AbstractClassesTransformer;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ClassesTransformer;
 import com.tngtech.archunit.lang.Priority;
+import com.tngtech.archunit.lang.syntax.elements.GivenClass;
 import com.tngtech.archunit.lang.syntax.elements.GivenClasses;
 import com.tngtech.archunit.lang.syntax.elements.GivenObjects;
 
@@ -64,6 +69,10 @@ public final class ArchRuleDefinition {
     @PublicAPI(usage = ACCESS)
     public static GivenClasses noClasses() {
         return priority(MEDIUM).noClasses();
+    }
+
+    public static GivenClass theClass(Class<?> clazz) {
+        return priority(MEDIUM).theClass(clazz);
     }
 
     public static final class Creator {
@@ -109,6 +118,16 @@ public final class ArchRuleDefinition {
                     priority,
                     classesTransformer.as("no " + classesTransformer.getDescription()),
                     ArchRuleDefinition.<TYPE>negateCondition());
+        }
+
+        public GivenClass theClass(final Class<?> clazz) {
+            ClassesTransformer<JavaClass> theClass = new AbstractClassesTransformer<JavaClass>("the class " + clazz.getName()) {
+                @Override
+                public Iterable<JavaClass> doTransform(JavaClasses classes) {
+                    return Collections.singleton(classes.get(clazz));
+                }
+            };
+            return new GivenClassInternal(priority, theClass, Functions.<ArchCondition<JavaClass>>identity());
         }
     }
 
