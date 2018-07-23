@@ -74,7 +74,7 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
 
     private static Dependency createDependency(JavaClass origin, JavaClass target, String dependencyType) {
         String description = String.format("%s %s %s in %s",
-                origin.getName(), dependencyType, target.getSimpleName(), Formatters.formatLocation(origin, 0));
+                origin.getName(), dependencyType, target.getName(), Formatters.formatLocation(origin, 0));
         return new Dependency(origin, target, 0, description);
     }
 

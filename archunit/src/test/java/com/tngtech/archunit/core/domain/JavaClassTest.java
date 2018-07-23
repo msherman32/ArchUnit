@@ -681,34 +681,35 @@ public class JavaClassTest {
     }
 
     private static DependencyConditionCreation callDependency() {
-        return new DependencyConditionCreation("calls");
+        return new DependencyConditionCreation("Constructor", "calls");
     }
 
     private static DependencyConditionCreation setFieldDependency() {
-        return new DependencyConditionCreation("sets");
+        return new DependencyConditionCreation("Method", "sets");
     }
 
     private static DependencyConditionCreation implementsDependency() {
-        return new DependencyConditionCreation("implements");
+        return new DependencyConditionCreation("", "implements");
     }
 
     private static DependencyConditionCreation extendsDependency() {
-        return new DependencyConditionCreation("extends");
+        return new DependencyConditionCreation("", "extends");
     }
 
-    private static DependencyConditionCreation hasReturnTypeDependency() {
-        return new DependencyConditionCreation("return type");
-    }
     private static DependencyConditionCreation hasFieldDependency() {
-        return new DependencyConditionCreation("has field of type");
-    }
-
-    private static DependencyConditionCreation hasMethodParameterDependency() {
-        return new DependencyConditionCreation("has parameter of type");
+        return new DependencyConditionCreation("Field", "is of type");
     }
 
     private static DependencyConditionCreation hasConstructorParameterDependency() {
-        return new DependencyConditionCreation("has parameter of type");
+        return new DependencyConditionCreation("Constructor", "has parameter of type");
+    }
+
+    private static DependencyConditionCreation hasReturnTypeDependency() {
+        return new DependencyConditionCreation("Method", "return type");
+    }
+
+    private static DependencyConditionCreation hasMethodParameterDependency() {
+        return new DependencyConditionCreation("Method", "has parameter of type");
     }
 
     private static AnyDependencyConditionCreation anyDependency() {
@@ -727,9 +728,11 @@ public class JavaClassTest {
     }
 
     private static class DependencyConditionCreation {
+        private final String memberDescription;
         private final String descriptionPart;
 
-        DependencyConditionCreation(String descriptionPart) {
+        DependencyConditionCreation(String memberDescription, String descriptionPart) {
+            this.memberDescription = memberDescription;
             this.descriptionPart = descriptionPart;
         }
 
@@ -768,7 +771,7 @@ public class JavaClassTest {
 
                 Condition<Dependency> inLineNumber(final int lineNumber) {
                     return new Condition<Dependency>(String.format(
-                            "%s %s %s in line %d", origin.getName(), descriptionPart, targetDescription, lineNumber)) {
+                            "%s %s %s %s in line %d", memberDescription, origin.getName(), descriptionPart, targetDescription, lineNumber)) {
                         @Override
                         public boolean matches(Dependency value) {
                             return value.getOriginClass().isEquivalentTo(origin) &&

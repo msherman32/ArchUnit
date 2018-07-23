@@ -515,15 +515,15 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
      * </ul>
      *
      * @return All dependencies originating directly from this class (i.e. where this class is the origin)
-     */
+     *///TODO: refactor the methods here
     @PublicAPI(usage = ACCESS)
     public Set<Dependency> getDirectDependenciesFromSelf() {
         ImmutableSet.Builder<Dependency> result = dependenciesFromAccesses(getAccessesFromSelf());
         result.addAll(dependenciesFromInheritance());
         result.addAll(dependenciesFromFields());
         result.addAll(dependenciesFromMethodReturnTypes());
-        result.addAll(dependenciesFromParameters("Constructor", constructors));
-        result.addAll(dependenciesFromParameters("Method", methods));
+        result.addAll(dependenciesFromParameters("Constructor", getConstructors()));
+        result.addAll(dependenciesFromParameters("Method", getMethods()));
         return result.build();
     }
 
@@ -545,7 +545,7 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
 
     private Set<Dependency> dependenciesFromFields() {
         ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-        for (JavaField field : fields) {
+        for (JavaField field : getFields()) {
             if (!field.getType().isPrimitive()) {
                 result.add(Dependency.from(field));
             }
@@ -555,7 +555,7 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
 
     private Set<Dependency> dependenciesFromMethodReturnTypes() {
         ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-        for (JavaMethod method : methods) {
+        for (JavaMethod method : getMethods()) {
             if (!method.getReturnType().isPrimitive()) {
                 result.add(Dependency.from(method));
             }
@@ -566,9 +566,9 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
     private Set<Dependency> dependenciesFromParameters(String description, Set<? extends JavaCodeUnit> codeUnits) {
         ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
         for (JavaCodeUnit codeUnit : codeUnits) {
-            for (JavaClass javaClass : codeUnit.getParameters()) {
-                if (!javaClass.isPrimitive()) {
-                    result.add(Dependency.from(description, codeUnit, javaClass));
+            for (JavaClass parameter : codeUnit.getParameters()) {
+                if (!parameter.isPrimitive()) {
+                    result.add(Dependency.from(description, codeUnit, parameter));
                 }
             }
         }
