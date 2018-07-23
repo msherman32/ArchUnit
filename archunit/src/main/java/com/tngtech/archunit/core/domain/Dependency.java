@@ -40,6 +40,17 @@ import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
  * </ul>
  */
 public class Dependency implements HasDescription, Comparable<Dependency> {
+    private final JavaClass originClass;
+    private final JavaClass targetClass;
+    private final int lineNumber;
+    private final String description;
+    private Dependency(JavaClass originClass, JavaClass targetClass, int lineNumber, String description) {
+        this.originClass = originClass;
+        this.targetClass = targetClass;
+        this.lineNumber = lineNumber;
+        this.description = description;
+    }
+
     static Dependency from(JavaAccess<?> access) {
         return new Dependency(access.getOriginOwner(), access.getTargetOwner(), access.getLineNumber(), access.getDescription());
     }
@@ -49,22 +60,28 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
         return createDependency(origin, targetSuperType, dependencyType);
     }
 
+    static Dependency from(JavaField field) {
+        return createDependency("Field", field, field.getType(), "is of type");
+    }
+
+    static Dependency from(JavaMethod method) {
+        return createDependency("Method", method, method.getReturnType(), "has return type");
+    }
+
+    static Dependency from(String description, JavaCodeUnit codeUnit, JavaClass target) {
+        return createDependency(description, codeUnit, target, "has parameter of type");
+    }
+
     private static Dependency createDependency(JavaClass origin, JavaClass target, String dependencyType) {
         String description = String.format("%s %s %s in %s",
-                origin.getName(), dependencyType, target.getName(), Formatters.formatLocation(origin, 0));
+                origin.getName(), dependencyType, target.getSimpleName(), Formatters.formatLocation(origin, 0));
         return new Dependency(origin, target, 0, description);
     }
 
-    private final JavaClass originClass;
-    private final JavaClass targetClass;
-    private final int lineNumber;
-    private final String description;
-
-    private Dependency(JavaClass originClass, JavaClass targetClass, int lineNumber, String description) {
-        this.originClass = originClass;
-        this.targetClass = targetClass;
-        this.lineNumber = lineNumber;
-        this.description = description;
+    private static Dependency createDependency(String memberDescription, JavaMember origin, JavaClass target, String dependencyType) {
+        String description = String.format("%s %s %s %s in %s",
+                memberDescription, origin.getFullName(), dependencyType, target.getSimpleName(), Formatters.formatLocation(origin.getOwner(), 0));
+        return new Dependency(origin.getOwner(), target, 0, description);
     }
 
     @PublicAPI(usage = ACCESS)
