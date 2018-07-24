@@ -44,16 +44,21 @@ import org.junit.runner.RunWith;
 import static com.tngtech.archunit.core.domain.JavaConstructor.CONSTRUCTOR_NAME;
 import static com.tngtech.archunit.integration.junit.CyclicErrorMatcher.cycle;
 import static com.tngtech.archunit.junit.ExpectedAccess.accessFrom;
+import static com.tngtech.archunit.junit.ExpectedDependency.field;
 import static com.tngtech.archunit.junit.ExpectedDependency.inheritanceFrom;
 
 @RunWith(ArchUnitIntegrationTestRunner.class)
 @AnalyzeClasses(packages = "com.tngtech.archunit.example.cycle")
 public class CyclicDependencyRulesIntegrationTest {
 
+    //    @ArchTest
+    //    @ExpectedViolationFrom("new data runner?")
+    //    //TODO: create new test
+
     @ArchTest
     @ExpectedViolationFrom(location = CyclicDependencyRulesIntegrationTest.class, method = "expectViolationFromSimpleCycle")
     public static final ArchRule no_cycles_by_method_calls_between_slices =
-            CyclicDependencyRulesTest.no_cycles_by_method_calls_between_slices;
+            CyclicDependencyRulesTest.no_cycles_by_method_calls_between_slices;//TODO:add an exmple here, this class houses example
 
     @ArchTest
     @ExpectedViolationFrom(location = CyclicDependencyRulesIntegrationTest.class, method = "expectViolationFromConstructorCycle")
@@ -93,14 +98,20 @@ public class CyclicDependencyRulesIntegrationTest {
                         .by(accessFrom(SliceOneCallingMethodInSliceTwo.class, "callSliceTwo")
                                 .toMethod(SliceTwoCallingMethodOfSliceThree.class, "doSomethingInSliceTwo")
                                 .inLine(9))
+                        .by(field(SliceOneCallingMethodInSliceTwo.class, "classInSliceTwo")
+                                .ofType(SliceTwoCallingMethodOfSliceThree.class))
                         .from("slice2 of simplecycle")
                         .by(accessFrom(SliceTwoCallingMethodOfSliceThree.class, "callSliceThree")
                                 .toMethod(SliceThreeCallingMethodOfSliceOne.class, "doSomethingInSliceThree")
                                 .inLine(9))
+                        .by(field(SliceTwoCallingMethodOfSliceThree.class, "classInSliceThree")
+                                .ofType(SliceThreeCallingMethodOfSliceOne.class))
                         .from("slice3 of simplecycle")
                         .by(accessFrom(SliceThreeCallingMethodOfSliceOne.class, "callSliceOne")
                                 .toMethod(SomeClassBeingCalledInSliceOne.class, "doSomethingInSliceOne")
-                                .inLine(9)));
+                                .inLine(9))
+                        .by(field(SliceThreeCallingMethodOfSliceOne.class, "someClassInSliceOne")
+                                .ofType(SomeClassBeingCalledInSliceOne.class)));
     }
 
     @CalledByArchUnitIntegrationTestRunner
@@ -152,10 +163,14 @@ public class CyclicDependencyRulesIntegrationTest {
                         .by(accessFrom(SliceOneAccessingFieldInSliceTwo.class, "accessSliceTwo")
                                 .setting().field(SliceTwoAccessingFieldInSliceOne.class, "accessedField")
                                 .inLine(9))
+                        .by(field(SliceOneAccessingFieldInSliceTwo.class, "classInSliceTwo")
+                                .ofType(ClassInSliceOneWithAccessedField.class))
                         .from("slice2 of fieldaccesscycle")
                         .by(accessFrom(SliceTwoAccessingFieldInSliceOne.class, "accessSliceOne")
                                 .setting().field(ClassInSliceOneWithAccessedField.class, "accessedField")
-                                .inLine(10)));
+                                .inLine(10))
+                        .by(field(SliceTwoAccessingFieldInSliceOne.class, "classInSliceOne")
+                                .ofType(ClassInSliceOneWithAccessedField.class)));
     }
 
     @CalledByArchUnitIntegrationTestRunner

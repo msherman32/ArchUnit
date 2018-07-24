@@ -1403,7 +1403,7 @@ public class ClassFileImporterTest {
     }
 
     @Test
-    public void dependency_target_classes_are_derived_correctly() throws Exception { //FIXME: add String.class to targets?
+    public void dependency_target_classes_are_derived_correctly() throws Exception {
         ImportedClasses classes = classesIn("testexamples/integration");
         JavaClass javaClass = classes.get(ClassXDependingOnClassesABCD.class);
         Set<JavaClass> expectedTargetClasses = ImmutableSet.of(
@@ -1415,11 +1415,21 @@ public class ClassFileImporterTest {
         );
 
         Set<JavaClass> targetClasses = new HashSet<>();
-        for (Dependency dependency : javaClass.getDirectDependenciesFromSelf()) {
+        for (Dependency dependency : withoutJavaLangTargets(javaClass.getDirectDependenciesFromSelf())) {
             targetClasses.add(dependency.getTargetClass());
         }
 
         assertThat(targetClasses).isEqualTo(expectedTargetClasses);
+    }
+
+    private Set<Dependency> withoutJavaLangTargets(Set<Dependency> dependencies) {
+        HashSet<Dependency> result = new HashSet<>();
+        for (Dependency dependency : dependencies) {
+            if (!dependency.getTargetClass().getPackage().startsWith("java.lang")) {
+                result.add(dependency);
+            }
+        }
+        return result;
     }
 
     @Test

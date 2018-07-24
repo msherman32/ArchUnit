@@ -7,24 +7,23 @@ import static java.util.regex.Pattern.quote;
 public class ExpectedDependency implements ExpectedRelation {
     private final Class<?> origin;
     private final Class<?> target;
-    private String dependencyTypePattern;
     private int lineNumber;
+    private String completeDependencyPattern;
 
-    private ExpectedDependency(Class<?> origin, String dependencyTypePattern, Class<?> target) {
-        this(origin, dependencyTypePattern, target, 0);
+    private ExpectedDependency(Class<?> origin, Class<?> target, String completeDependencyPattern) {
+        this(origin, target, 0, completeDependencyPattern);
     }
 
-    private ExpectedDependency(Class<?> origin, String dependencyTypePattern, Class<?> target, int lineNumber) {
+    private ExpectedDependency(Class<?> origin, Class<?> target, int lineNumber, String completeDependencyPattern) {
         this.origin = origin;
         this.target = target;
-        this.dependencyTypePattern = dependencyTypePattern;
         this.lineNumber = lineNumber;
+        this.completeDependencyPattern = completeDependencyPattern;
     }
 
     @Override
     public String toString() {
-        return String.format("Matches: %s ... %s ... %s ... .java:%d",
-                origin.getName(), dependencyTypePattern, target.getName(), lineNumber);
+        return "Matches: " + completeDependencyPattern;
     }
 
     public static InheritanceCreator inheritanceFrom(Class<?> clazz) {
@@ -35,12 +34,20 @@ public class ExpectedDependency implements ExpectedRelation {
         return new AccessCreator(clazz);
     }
 
-    @Override
-    public void associateLines(LineAssociation association) {
-        association.associateIfPatternMatches(getCompleteDescriptionPattern());
+    public static FieldTypeCreator field(Class<?> owner, String fieldName) {
+        return new FieldTypeCreator(owner, fieldName);
     }
 
-    private String getCompleteDescriptionPattern() {
+    @Override
+    public void associateLines(LineAssociation association) {
+        association.associateIfPatternMatches(getInheritanceOrAccessPattern());
+    }
+
+    private String getInheritanceOrAccessPattern() {
+        return completeDependencyPattern;
+    }
+
+    private static String getCompleteDescriptionPattern(Class<?> origin, String dependencyTypePattern, Class<?> target, int lineNumber) {
         return String.format(".*%s.*%s.*%s.*\\.java:%d.*",
                 quote(origin.getName()), dependencyTypePattern, quote(target.getName()), lineNumber);
     }
@@ -54,7 +61,7 @@ public class ExpectedDependency implements ExpectedRelation {
         Dependency dependency = (Dependency) object;
         boolean originMatches = dependency.getOriginClass().isEquivalentTo(origin);
         boolean targetMatches = dependency.getTargetClass().isEquivalentTo(target);
-        boolean descriptionMatches = dependency.getDescription().matches(getCompleteDescriptionPattern());
+        boolean descriptionMatches = dependency.getDescription().matches(getInheritanceOrAccessPattern());
         return originMatches && targetMatches && descriptionMatches;
     }
 
@@ -66,12 +73,13 @@ public class ExpectedDependency implements ExpectedRelation {
         }
 
         public ExpectedDependency extending(Class<?> superClass) {
-            return new ExpectedDependency(clazz, "extends", superClass);
+            return new ExpectedDependency(clazz, superClass, getCompleteDescriptionPattern(clazz, "extends", superClass, 0));
         }
 
         public ExpectedDependency implementing(Class<?> anInterface) {
-            return new ExpectedDependency(clazz, "implements", anInterface);
+            return new ExpectedDependency(clazz, anInterface, getCompleteDescriptionPattern(clazz, "implements", anInterface, 0));
         }
+
     }
 
     public static class AccessCreator {
@@ -99,8 +107,30 @@ public class ExpectedDependency implements ExpectedRelation {
             }
 
             public ExpectedDependency inLineNumber(int lineNumber) {
-                return new ExpectedDependency(originClass, description, targetClass, lineNumber);
+                return new ExpectedDependency(originClass, targetClass, lineNumber, String.format(".*%s.*%s.*%s.*\\.java:%d.*",
+                        quote(originClass.getName()), description, quote(targetClass.getName()), lineNumber));
             }
+        }
+    }
+
+    public static class FieldTypeCreator {
+
+        private final Class<?> owner;
+        private final String fieldName;
+
+        private FieldTypeCreator(Class<?> owner, String fieldName) {
+            this.owner = owner;
+            this.fieldName = fieldName;
+        }
+
+        public ExpectedDependency ofType(Class<?> type) {
+            return new ExpectedDependency(owner, type,
+                    getCompleteDescriptionFromFieldType(type));
+        }
+
+        private String getCompleteDescriptionFromFieldType(Class<?> type) {
+            return String.format(".*%s.*%s\\.%s.*%s.*%s.*\\.java:%d.*",
+                    "Field", owner.getName(), fieldName, "is of type", type.getName(), 0);
         }
     }
 }

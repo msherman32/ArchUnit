@@ -87,7 +87,7 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
 
     private static Dependency createDependencyFromJavaMember(String memberType, JavaMember origin, String dependencyType, JavaClass target) {
         String dependencyDescription = Joiner.on(" ").join(
-                memberType, origin.getFullName(), dependencyType, target.getSimpleName());
+                memberType, origin.getFullName(), dependencyType, target.getName());
         String description = dependencyDescription + " in " + formatLocation(origin.getOwner(), 0);
         return new Dependency(origin.getOwner(), target, 0, description);
     }
