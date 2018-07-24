@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.Set;
 
 import com.tngtech.archunit.PublicAPI;
+import com.tngtech.archunit.base.ChainableFunction;
 import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.base.Function;
 import com.tngtech.archunit.core.MayResolveTypesViaReflection;
 import com.tngtech.archunit.core.ResolvesTypesViaReflection;
 import com.tngtech.archunit.core.domain.DomainObjectCreationContext.AccessContext;
@@ -124,6 +126,20 @@ public abstract class JavaCodeUnit extends JavaMember implements HasParameterTyp
                 }
             };
         }
+    }
+
+    public static final class Functions {
+        private Functions() {
+        }
+
+        @PublicAPI(usage = ACCESS)
+        public static ChainableFunction<JavaCodeUnit, JavaClass> GET_RETURN_TYPE =
+                new ChainableFunction<JavaCodeUnit, JavaClass>() {
+                    @Override
+                    public JavaClass apply(JavaCodeUnit input) {
+                        return input.getReturnType();
+                    }
+                };
     }
 
 }

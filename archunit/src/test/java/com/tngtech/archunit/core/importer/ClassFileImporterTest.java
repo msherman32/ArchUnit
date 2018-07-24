@@ -1403,7 +1403,7 @@ public class ClassFileImporterTest {
     }
 
     @Test
-    public void dependency_target_classes_are_derived_correctly() throws Exception {
+    public void dependency_target_classes_are_derived_correctly() throws Exception { //FIXME: add String.class to targets?
         ImportedClasses classes = classesIn("testexamples/integration");
         JavaClass javaClass = classes.get(ClassXDependingOnClassesABCD.class);
         Set<JavaClass> expectedTargetClasses = ImmutableSet.of(

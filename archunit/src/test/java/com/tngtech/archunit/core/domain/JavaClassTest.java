@@ -700,16 +700,16 @@ public class JavaClassTest {
         return new DependencyConditionCreation("Field", "is of type");
     }
 
-    private static DependencyConditionCreation hasConstructorParameterDependency() {
-        return new DependencyConditionCreation("Constructor", "has parameter of type");
-    }
-
     private static DependencyConditionCreation hasReturnTypeDependency() {
-        return new DependencyConditionCreation("Method", "return type");
+        return new DependencyConditionCreation("Method", "has return type");
     }
 
     private static DependencyConditionCreation hasMethodParameterDependency() {
         return new DependencyConditionCreation("Method", "has parameter of type");
+    }
+
+    private static DependencyConditionCreation hasConstructorParameterDependency() {
+        return new DependencyConditionCreation("Constructor", "has parameter of type");
     }
 
     private static AnyDependencyConditionCreation anyDependency() {
@@ -729,11 +729,11 @@ public class JavaClassTest {
 
     private static class DependencyConditionCreation {
         private final String memberDescription;
-        private final String descriptionPart;
+        private final String dependencyType;
 
-        DependencyConditionCreation(String memberDescription, String descriptionPart) {
+        DependencyConditionCreation(String memberDescription, String dependencyType) {
             this.memberDescription = memberDescription;
-            this.descriptionPart = descriptionPart;
+            this.dependencyType = dependencyType;
         }
 
         Step2 from(Class<?> origin) {
@@ -771,13 +771,13 @@ public class JavaClassTest {
 
                 Condition<Dependency> inLineNumber(final int lineNumber) {
                     return new Condition<Dependency>(String.format(
-                            "%s %s %s %s in line %d", memberDescription, origin.getName(), descriptionPart, targetDescription, lineNumber)) {
+                            "%s %s %s %s in line %d", memberDescription, origin.getName(), dependencyType, targetDescription, lineNumber)) {
                         @Override
                         public boolean matches(Dependency value) {
                             return value.getOriginClass().isEquivalentTo(origin) &&
                                     value.getTargetClass().isEquivalentTo(target) &&
                                     value.getDescription().matches(String.format(".*%s.*%s.*%s.*:%d.*",
-                                            origin.getSimpleName(), descriptionPart, targetDescription, lineNumber));
+                                            origin.getSimpleName(), dependencyType, targetDescription, lineNumber));
                         }
                     };
                 }

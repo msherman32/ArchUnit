@@ -17,6 +17,7 @@ package com.tngtech.archunit.core.domain;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,7 @@ import com.tngtech.archunit.PublicAPI;
 import com.tngtech.archunit.base.ArchUnitException.InvalidSyntaxUsageException;
 import com.tngtech.archunit.base.ChainableFunction;
 import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.base.Function;
 import com.tngtech.archunit.base.Optional;
 import com.tngtech.archunit.base.PackageMatcher;
 import com.tngtech.archunit.core.MayResolveTypesViaReflection;
@@ -51,9 +53,11 @@ import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
 import static com.tngtech.archunit.base.DescribedPredicate.equalTo;
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Functions.GET_SIMPLE_NAME;
+import static com.tngtech.archunit.core.domain.JavaCodeUnit.Functions.GET_RETURN_TYPE;
 import static com.tngtech.archunit.core.domain.JavaConstructor.CONSTRUCTOR_NAME;
 import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Utils.toAnnotationOfType;
 import static com.tngtech.archunit.core.domain.properties.HasName.Functions.GET_NAME;
+import static com.tngtech.archunit.core.domain.properties.HasType.Functions.GET_TYPE;
 
 public class JavaClass implements HasName, HasAnnotations, HasModifiers {
     private final Optional<Source> source;
@@ -515,63 +519,15 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
      * </ul>
      *
      * @return All dependencies originating directly from this class (i.e. where this class is the origin)
-     *///TODO: refactor the methods here
+     */
     @PublicAPI(usage = ACCESS)
     public Set<Dependency> getDirectDependenciesFromSelf() {
         ImmutableSet.Builder<Dependency> result = dependenciesFromAccesses(getAccessesFromSelf());
         result.addAll(dependenciesFromInheritance());
         result.addAll(dependenciesFromFields());
         result.addAll(dependenciesFromMethodReturnTypes());
-        result.addAll(dependenciesFromParameters("Constructor", getConstructors()));
-        result.addAll(dependenciesFromParameters("Method", getMethods()));
-        return result.build();
-    }
-
-    private ImmutableSet.Builder<Dependency> dependenciesFromAccesses(Set<JavaAccess<?>> accesses) {
-        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-        for (JavaAccess<?> access : filterNoSelfAccess(accesses)) {
-            result.add(Dependency.from(access));
-        }
-        return result;
-    }
-
-    private Set<Dependency> dependenciesFromInheritance() {
-        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-        for (JavaClass superType : FluentIterable.from(getInterfaces()).append(getSuperClass().asSet())) {
-            result.add(Dependency.fromInheritance(this, superType));
-        }
-        return result.build();
-    }
-
-    private Set<Dependency> dependenciesFromFields() {
-        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-        for (JavaField field : getFields()) {
-            if (!field.getType().isPrimitive()) {
-                result.add(Dependency.from(field));
-            }
-        }
-        return result.build();
-    }
-
-    private Set<Dependency> dependenciesFromMethodReturnTypes() {
-        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-        for (JavaMethod method : getMethods()) {
-            if (!method.getReturnType().isPrimitive()) {
-                result.add(Dependency.from(method));
-            }
-        }
-        return result.build();
-    }
-
-    private Set<Dependency> dependenciesFromParameters(String description, Set<? extends JavaCodeUnit> codeUnits) {
-        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-        for (JavaCodeUnit codeUnit : codeUnits) {
-            for (JavaClass parameter : codeUnit.getParameters()) {
-                if (!parameter.isPrimitive()) {
-                    result.add(Dependency.from(description, codeUnit, parameter));
-                }
-            }
-        }
+        result.addAll(dependenciesFromMethodParameters());
+        result.addAll(dependenciesFromConstructorParameters());
         return result.build();
     }
 
@@ -588,16 +544,6 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
             result.add(Dependency.fromInheritance(subClass, this));
         }
         return result.build();
-    }
-
-    private Set<JavaAccess<?>> filterNoSelfAccess(Set<? extends JavaAccess<?>> accesses) {
-        Set<JavaAccess<?>> result = new HashSet<>();
-        for (JavaAccess<?> access : accesses) {
-            if (!access.getTargetOwner().equals(access.getOriginOwner())) {
-                result.add(access);
-            }
-        }
-        return result;
     }
 
     @PublicAPI(usage = ACCESS)
@@ -802,125 +748,84 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
         return getSimpleName().isEmpty(); // This is implemented the same way within java.lang.Class
     }
 
-    //TODO: create an inner class that has fullName, Origin class, targetClass, and description in Dependency
-    //TODO: make this class abstract so that I can implement the Dependency.fromConstructorParamaterType(), Dependency.fromFieldType().. etc.
+    private ImmutableSet.Builder<Dependency> dependenciesFromAccesses(Set<JavaAccess<?>> accesses) {
+        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
+        for (JavaAccess<?> access : filterNoSelfAccess(accesses)) {
+            result.add(Dependency.from(access));
+        }
+        return result;
+    }
 
-    //    static class PropertiesToDependency {
-    //        Set<JavaClassPropertyToDependency> propertyToDependencies;
-    //        //have a hashset of JavaClass (origin) to set of JavaClass (targets)
-    //
-    //        getFieldsAsDependencies() {
-    //            return FieldToDependency.dependenciesT
-    //        }
-    //    }
+    private Set<Dependency> dependenciesFromInheritance() {
+        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
+        for (JavaClass superType : FluentIterable.from(getInterfaces()).append(getSuperClass().asSet())) {
+            result.add(Dependency.fromInheritance(this, superType));
+        }
+        return result.build();
+    }
 
-    //    static abstract class JavaClassPropertyToDependency { //todo extend Dependency.class
-    //        private String fullName;
-    //        private JavaMember origin;
-    //        private JavaMember target;
-    //        private String desciption;
-    //
-    //        private JavaClassPropertyToDependency(String fullName, JavaMember originClass, JavaMember targetClass, String description) {
-    //            this.origin = originClass;
-    //            this.target = targetClass;
-    //            this.desciption = description;
-    //            this.fullName = fullName;
-    //        }
-    //
-    //        String getFullName() {
-    //            return fullName;
-    //        }
-    //
-    //        JavaMember getOrigin() {
-    //            return origin;
-    //        }
-    //
-    //        JavaMember getTarget() {
-    //            return target;
-    //        }
-    //
-    //        String getDesciption() {
-    //            return desciption;
-    //        }
-    //
-    //        private Set<Dependency> dependenciesFromFields(String codeUnitDescription) {
-    //            ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-    //            for (JavaField field : fields) {
-    //                if (!field.getType().isPrimitive()) {
-    //                    result.add(Dependency.from(codeUnitDescription, field));
-    //                }
-    //            }
-    //            return result.build();
-    //        }
-    //
-    //        private Set<Dependency> dependenciesFromMethodReturnTypes(String codeUnitDescription) {
-    //            ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-    //            for (JavaCodeUnit method : methods) {
-    //                if (!method.getReturnType().isPrimitive()) {
-    //                    result.add(Dependency.from(codeUnitDescription, method, method.getReturnType()));
-    //                }
-    //            }
-    //            return result.build();
-    //        }
-    //
-    //        private Set<Dependency> dependenciesFromParameters(String codeUnitDescription, Set<? extends JavaCodeUnit> codeUnits) {
-    //            ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
-    //            for (JavaCodeUnit codeUnit : codeUnits) {
-    //                for (JavaClass javaClass : codeUnit.getParameters()) {
-    //                    if (!javaClass.isPrimitive()) {
-    //                        result.add(Dependency.from(codeUnitDescription, codeUnit, javaClass));
-    //                    }
-    //                }
-    //            }
-    //            return result.build();
-    //        }
-    //    }
-    //
-    //    static class FieldToDependency extends JavaClassPropertyToDependency {
-    //
-    //        private FieldToDependency(String fullName, JavaClass originClass, JavaClass targetClass, int lineNumber, String description) {
-    //            super(fullName, originClass, targetClass, lineNumber, description);
-    //        }
-    //
-    //        public Set<Dependency> dependenciesFromFields(Set<JavaField> fields) {
-    //            ImmutableSet.Builder result = ImmutableSet.builder();
-    //            for (JavaField field : fields) {
-    //                result.add(dependencyFromField(field));
-    //            }
-    //            return result.build();
-    //        }
-    //
-    //        Dependency dependencyFromField(JavaField field) {
-    //            String description = String.format("%s %s is of type %s in %s",
-    //                    getDesciption(), getOrigin().getFullName(), field.getName(), Formatters.formatLocation(field, 0));
-    //            return new Dependency(super.getOrigin(), field, 0, description);
-    //        }
-    //
-    //        Dependency fromParameter(String codeUnitDescription, JavaCodeUnit origin, JavaClass parameter) {
-    //            return null;
-    //        }
-    //    }
-    //
-    //    static class MethodParameterToDependency extends JavaClassPropertyToDependency {
-    //
-    //        private MethodParameterToDependency(String fullName, JavaClass originClass, JavaClass targetClass, int lineNumber, String description) {
-    //            super(fullName, originClass, targetClass, lineNumber, description);
-    //        }
-    //
-    //        @Override
-    //        Dependency fromParameter(String codeUnitDescription, JavaCodeUnit origin, JavaClass parameter) {
-    //            String description = String.format("%s %s is of type %s in %s",
-    //                    codeUnitDescription, origin.getFullName(), parameter.getName(), Formatters.formatLocation(origin.getOwner(), 0));
-    //            return new Dependency(origin.getOwner(), parameter, 0, description);
-    //        }
-    //
-    //        @Override
-    //        Dependency dependenciesFromFields(String memberDescription, JavaMember origin, JavaClass returnTypeOrFieldType) {
-    //            return null;
-    //        }
-    //    }
+    private Set<Dependency> dependenciesFromFields() {
+        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
+        for (JavaField field : nonPrimitive(getFields(), GET_TYPE)) {
+            result.add(Dependency.fromField(field));
+        }
+        return result.build();
+    }
+
+    private Set<Dependency> dependenciesFromMethodReturnTypes() {
+        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
+        for (JavaMethod method : nonPrimitive(getMethods(), GET_RETURN_TYPE)) {
+            result.add(Dependency.fromReturnType(method));
+        }
+        return result.build();
+    }
+
+    private Set<Dependency> dependenciesFromMethodParameters() {
+        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
+        for (JavaMethod method : getMethods()) {
+            for (JavaClass parameter : nonPrimitive(method.getParameters())) {
+                result.add(Dependency.fromParameter(method, parameter));
+            }
+        }
+        return result.build();
+    }
+
+    private Set<Dependency> dependenciesFromConstructorParameters() {
+        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
+        for (JavaConstructor constructor : getConstructors()) {
+            for (JavaClass parameter : nonPrimitive(constructor.getParameters())) {
+                result.add(Dependency.fromParameter(constructor, parameter));
+            }
+        }
+        return result.build();
+    }
+
+    private Set<JavaAccess<?>> filterNoSelfAccess(Set<? extends JavaAccess<?>> accesses) {
+        Set<JavaAccess<?>> result = new HashSet<>();
+        for (JavaAccess<?> access : accesses) {
+            if (!access.getTargetOwner().equals(access.getOriginOwner())) {
+                result.add(access);
+            }
+        }
+        return result;
+    }
+
+    private Set<JavaClass> nonPrimitive(Collection<JavaClass> classes) {
+        return nonPrimitive(classes, com.tngtech.archunit.base.Function.Functions.<JavaClass>identity());
+    }
+
+    private <T> Set<T> nonPrimitive(Collection<T> members, Function<? super T, JavaClass> getRelevantType) {
+        ImmutableSet.Builder<T> result = ImmutableSet.builder();
+        for (T member : members) {
+            if (!getRelevantType.apply(member).isPrimitive()) {
+                result.add(member);
+            }
+        }
+        return result.build();
+    }
 
     public static final class Functions {
+
         private Functions() {
         }
 
@@ -946,9 +851,11 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
                 return input.getPackage();
             }
         };
+
     }
 
     public static final class Predicates {
+
         private Predicates() {
         }
 
@@ -1090,6 +997,7 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
         }
 
         private static class SimpleNameStartingWithPredicate extends DescribedPredicate<JavaClass> {
+
             private final String prefix;
 
             SimpleNameStartingWithPredicate(String prefix) {
@@ -1101,9 +1009,11 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
             public boolean apply(JavaClass input) {
                 return input.getSimpleName().startsWith(prefix);
             }
+
         }
 
         private static class SimpleNameContainingPredicate extends DescribedPredicate<JavaClass> {
+
             private final String infix;
 
             SimpleNameContainingPredicate(String infix) {
@@ -1115,9 +1025,11 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
             public boolean apply(JavaClass input) {
                 return input.getSimpleName().contains(infix);
             }
+
         }
 
         private static class SimpleNameEndingWithPredicate extends DescribedPredicate<JavaClass> {
+
             private final String suffix;
 
             SimpleNameEndingWithPredicate(String suffix) {
@@ -1129,9 +1041,11 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
             public boolean apply(JavaClass input) {
                 return input.getSimpleName().endsWith(suffix);
             }
+
         }
 
         private static class AssignableToPredicate extends DescribedPredicate<JavaClass> {
+
             private final DescribedPredicate<? super JavaClass> predicate;
 
             AssignableToPredicate(DescribedPredicate<? super JavaClass> predicate) {

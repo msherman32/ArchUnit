@@ -20,6 +20,7 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
 @AnalyzeClasses(packages = "com.tngtech.archunit.example.cycle")
 public class CyclicDependencyRulesTest {
 
+    //FIXME: some tests fail here
     @ArchTest
     public static final ArchRule no_cycles_by_method_calls_between_slices =
             slices().matching("..(simplecycle).(*)..").namingSlices("$2 of $1").should().beFreeOfCycles();

@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ComparisonChain;
 import com.tngtech.archunit.PublicAPI;
@@ -28,6 +29,7 @@ import com.tngtech.archunit.base.HasDescription;
 import com.tngtech.archunit.core.domain.properties.HasName;
 
 import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
+import static com.tngtech.archunit.core.domain.Formatters.formatLocation;
 
 /**
  * Represents a dependency of one Java class on another Java class. Such a dependency can occur by either of the
@@ -44,6 +46,7 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
     private final JavaClass targetClass;
     private final int lineNumber;
     private final String description;
+
     private Dependency(JavaClass originClass, JavaClass targetClass, int lineNumber, String description) {
         this.originClass = originClass;
         this.targetClass = targetClass;
@@ -57,30 +60,35 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
 
     static Dependency fromInheritance(JavaClass origin, JavaClass targetSuperType) {
         String dependencyType = targetSuperType.isInterface() ? "implements" : "extends";
-        return createDependency(origin, targetSuperType, dependencyType);
+        return createDependency(origin, dependencyType, targetSuperType);
     }
 
-    static Dependency from(JavaField field) {
-        return createDependency("Field", field, field.getType(), "is of type");
+    static Dependency fromField(JavaField field) {
+        return createDependencyFromJavaMember("Field", field, "is of type", field.getType());
     }
 
-    static Dependency from(JavaMethod method) {
-        return createDependency("Method", method, method.getReturnType(), "has return type");
+    static Dependency fromReturnType(JavaMethod method) {
+        return createDependencyFromJavaMember("Method", method, "has return type", method.getReturnType());
     }
 
-    static Dependency from(String description, JavaCodeUnit codeUnit, JavaClass target) {
-        return createDependency(description, codeUnit, target, "has parameter of type");
+    static Dependency fromParameter(JavaMethod method, JavaClass parameter) {
+        return createDependencyFromJavaMember("Method", method, "has parameter of type", parameter);
     }
 
-    private static Dependency createDependency(JavaClass origin, JavaClass target, String dependencyType) {
-        String description = String.format("%s %s %s in %s",
-                origin.getName(), dependencyType, target.getName(), Formatters.formatLocation(origin, 0));
+    static Dependency fromParameter(JavaConstructor constructor, JavaClass parameter) {
+        return createDependencyFromJavaMember("Constructor", constructor, "has parameter of type", parameter);
+    }
+
+    private static Dependency createDependency(JavaClass origin, String dependencyType, JavaClass target) {
+        String dependencyDescription = Joiner.on(" ").join(origin.getName(), dependencyType, target.getName());
+        String description = dependencyDescription + " in " + formatLocation(origin, 0);
         return new Dependency(origin, target, 0, description);
     }
 
-    private static Dependency createDependency(String memberDescription, JavaMember origin, JavaClass target, String dependencyType) {
-        String description = String.format("%s %s %s %s in %s",
-                memberDescription, origin.getFullName(), dependencyType, target.getSimpleName(), Formatters.formatLocation(origin.getOwner(), 0));
+    private static Dependency createDependencyFromJavaMember(String memberType, JavaMember origin, String dependencyType, JavaClass target) {
+        String dependencyDescription = Joiner.on(" ").join(
+                memberType, origin.getFullName(), dependencyType, target.getSimpleName());
+        String description = dependencyDescription + " in " + formatLocation(origin.getOwner(), 0);
         return new Dependency(origin.getOwner(), target, 0, description);
     }
 
