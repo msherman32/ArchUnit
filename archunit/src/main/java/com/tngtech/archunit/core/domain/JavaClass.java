@@ -745,7 +745,7 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
 
     @PublicAPI(usage = ACCESS)
     public boolean isAnonymous() {
-        return getSimpleName().isEmpty(); // This is implemented the same way within java.lang.Class
+        return getSimpleName().isEmpty();
     }
 
     private ImmutableSet.Builder<Dependency> dependenciesFromAccesses(Set<JavaAccess<?>> accesses) {

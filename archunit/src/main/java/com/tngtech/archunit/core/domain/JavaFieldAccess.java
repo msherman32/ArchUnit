@@ -37,6 +37,7 @@ public class JavaFieldAccess extends JavaAccess<FieldAccessTarget> {
     private static final Map<AccessType, String> MESSAGE_TEMPLATE = ImmutableMap.of(
             GET, "Method <%s> gets field <%s>",
             SET, "Method <%s> sets field <%s>");
+    //TODO: take out or keep these "Method "?
 
     private final AccessType accessType;
 
@@ -82,7 +83,7 @@ public class JavaFieldAccess extends JavaAccess<FieldAccessTarget> {
         return accessTypes.size() == 1
                 ? MESSAGE_TEMPLATE.get(getOnlyElement(accessTypes))
                 : "Method <%s> accesses field <%s>";
-    }
+    }   //TODO: change this back to Method
 
     public enum AccessType {
         @PublicAPI(usage = ACCESS)

@@ -85,8 +85,8 @@ public class ExpectedViolation implements TestRule, ExpectsViolations {
     }
 
     @Override
-    public ExpectsViolations by(ExpectedDependency dependency) {
-        dependency.associateLines(toAssertionChain());
+    public ExpectsViolations by(ExpectedDependency expectedDependency) {
+        expectedDependency.associateLines(toAssertionChain());
         return this;
     }
 

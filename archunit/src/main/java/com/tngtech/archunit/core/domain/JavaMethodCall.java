@@ -27,4 +27,6 @@ public class JavaMethodCall extends JavaCall<MethodCallTarget> {
     protected String descriptionTemplate() {
         return "Method <%s> calls method <%s>";
     }
+
+    //TODO: change this to METHOD calls ...
 }

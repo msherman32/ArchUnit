@@ -23,6 +23,8 @@ abstract class ExpectedMember {
     private final Class<?> clazz;
     private final String memberName;
     private final List<String> params = new ArrayList<>();
+    private final String memberDescription;
+    //TODO: add a string here
 
     ExpectedMember(Class<?> clazz, String memberName, Class<?>[] paramTypes) {
         this.clazz = clazz;
@@ -30,6 +32,7 @@ abstract class ExpectedMember {
         for (Class<?> paramType : paramTypes) {
             params.add(paramType.getName());
         }
+        this.memberDescription = "fix this"; //TODO: fix this
     }
 
     String lineMessage(int number) {
@@ -107,7 +110,7 @@ abstract class ExpectedMember {
         String template() {
             return "Method <%s> " + accesses + " field <%s> in %s";
         }
-    }
+    }        //TODO: change this accordingly to Constructor or Method
 
     static class ExpectedMethodTarget extends ExpectedTarget {
         ExpectedMethodTarget(Class<?> clazz, String memberName, Class<?>[] paramTypes) {
@@ -118,6 +121,7 @@ abstract class ExpectedMember {
         String template() {
             return "Method <%s> calls method <%s> in %s";
         }
+        //TODO: change this accordingly to Constructor or Method
 
         @Override
         public String toString() {
@@ -134,5 +138,6 @@ abstract class ExpectedMember {
         String template() {
             return "Method <%s> calls constructor <%s> in %s";
         }
+        //TODO: change this accordingly to Constructor or Method PARAMETERIZE THESE
     }
 }

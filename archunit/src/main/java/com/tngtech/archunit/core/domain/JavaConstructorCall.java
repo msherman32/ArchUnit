@@ -26,5 +26,5 @@ public class JavaConstructorCall extends JavaCall<ConstructorCallTarget> {
     @Override
     protected String descriptionTemplate() {
         return "Method <%s> calls constructor <%s>";
-    }
+    } //TODO: change this to Constructor THIS SHOULD BE PARAMETERIZED
 }

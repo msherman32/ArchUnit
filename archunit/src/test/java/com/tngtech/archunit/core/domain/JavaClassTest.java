@@ -680,8 +680,9 @@ public class JavaClassTest {
         return importClasses(classesToImport.toArray(new Class[classesToImport.size()])).get(clazz);
     }
 
+    //TODO: I used to have a parameter for memberDescription here. Add this back?
     private static DependencyConditionCreation callDependency() {
-        return new DependencyConditionCreation("Constructor", "calls");
+        return new DependencyConditionCreation("", "calls");
     }
 
     private static DependencyConditionCreation setFieldDependency() {
@@ -694,7 +695,7 @@ public class JavaClassTest {
 
     private static DependencyConditionCreation extendsDependency() {
         return new DependencyConditionCreation("", "extends");
-    }
+    }//TODO: make this Class ... extends
 
     private static DependencyConditionCreation hasFieldDependency() {
         return new DependencyConditionCreation("Field", "is of type");
@@ -776,8 +777,8 @@ public class JavaClassTest {
                         public boolean matches(Dependency value) {
                             return value.getOriginClass().isEquivalentTo(origin) &&
                                     value.getTargetClass().isEquivalentTo(target) &&
-                                    value.getDescription().matches(String.format(".*%s.*%s.*%s.*:%d.*",
-                                            origin.getSimpleName(), dependencyType, targetDescription, lineNumber));
+                                    value.getDescription().matches(String.format(".*%s.*%s.*%s.*%s.*:%d.*",
+                                            memberDescription, origin.getSimpleName(), dependencyType, targetDescription, lineNumber));
                         }
                     };
                 }

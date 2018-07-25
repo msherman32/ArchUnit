@@ -117,7 +117,8 @@ public abstract class JavaAccess<TARGET extends AccessTarget>
 
     @Internal
     public String getDescriptionWithTemplate(String template) {
-        String description = String.format(template, getOwner().getFullName(), getTarget().getFullName());
+//        String constructorOrMethod = origin.isConstructor() ? "Constructor" : "Method";
+        String description = String.format(template, getOwner().getFullName(), getTarget().getFullName()); //TODO: this is where the template is used
         String location = formatLocation(getOriginOwner(), getLineNumber());
         return String.format("%s in %s", description, location);
     }

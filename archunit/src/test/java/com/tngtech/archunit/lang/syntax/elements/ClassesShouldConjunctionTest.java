@@ -147,7 +147,7 @@ public class ClassesShouldConjunctionTest {
                 quote(clazz.getName()), quote(clazz.getName()), locationPattern(locationOf(clazz)));
     }
 
-    private String otherWrongCallsWrongRegex() {
+    private String otherWrongCallsWrongRegex() { //TODO: change this for Method or Constructor
         return String.format("Method <%s.call\\(\\)> calls constructor <%s.<init>\\(.*\\)>.*",
                 quote(OtherWrong.class.getName()), quote(Wrong.class.getName()));
     }

@@ -77,7 +77,7 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
 
     static Dependency fromParameter(JavaConstructor constructor, JavaClass parameter) {
         return createDependencyFromJavaMember("Constructor", constructor, "has parameter of type", parameter);
-    }
+    } //TODO: change this for constructor or method?
 
     private static Dependency createDependency(JavaClass origin, String dependencyType, JavaClass target) {
         String dependencyDescription = Joiner.on(" ").join(origin.getName(), dependencyType, target.getName());

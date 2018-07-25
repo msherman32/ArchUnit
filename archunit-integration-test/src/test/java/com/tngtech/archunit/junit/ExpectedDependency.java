@@ -38,6 +38,14 @@ public class ExpectedDependency implements ExpectedRelation {
         return new FieldTypeCreator(owner, fieldName);
     }
 
+    public static MethodCreator method(Class<?> owner, String methodName) {
+        return new MethodCreator(owner, methodName);
+    }
+
+    public static ConstructorParameterCreator constructor(Class<?> owner, String constructorName) {
+        return new ConstructorParameterCreator(owner, constructorName);
+    }
+
     @Override
     public void associateLines(LineAssociation association) {
         association.associateIfPatternMatches(getInheritanceOrAccessPattern());
@@ -129,8 +137,78 @@ public class ExpectedDependency implements ExpectedRelation {
         }
 
         private String getCompleteDescriptionFromFieldType(Class<?> type) {
-            return String.format(".*%s.*%s\\.%s.*%s.*%s.*\\.java:%d.*",
-                    "Field", owner.getName(), fieldName, "is of type", type.getName(), 0);
+            return String.format(".*Field.*%s\\.%s.*%s.*%s.*\\.java:%d.*",
+                    owner.getName(), fieldName, "is of type", type.getName(), 0);
+        }
+    }
+
+    public static class MethodCreator {
+        private final Class<?> owner;
+        private final String methodName;
+
+        public MethodCreator(Class<?> owner, String methodName) {
+            this.owner = owner;
+            this.methodName = methodName;
+        }
+
+        public ExpectedDependency hasParameter(Class<?> targetParameter) {
+            return new MethodParameterCreator(owner, methodName).hasParameter(targetParameter);
+        }
+
+        public ExpectedDependency withReturnType(Class<?> returnType) {
+            return new MethodReturnTypeCreator(owner, methodName).withReturnType(returnType);
+        }
+
+        private class MethodParameterCreator extends MethodCreator {
+
+            public MethodParameterCreator(Class<?> owner, String methodName) {
+                super(owner, methodName);
+            }
+
+            public ExpectedDependency hasParameter(Class<?> targetParameter) {
+                return new ExpectedDependency(super.owner, targetParameter, description(targetParameter));
+            }
+
+            private String description(Class<?> targetParameter) {
+                return String.format("Method.*%s\\.%s.*%s.*%s.*\\.java:%d.*",
+                        super.owner.getName(), super.methodName, "has parameter of type", targetParameter.getName(), 0);
+            }
+        }
+
+        private class MethodReturnTypeCreator extends MethodCreator {
+
+            public MethodReturnTypeCreator(Class<?> owner, String methodName) {
+                super(owner, methodName);
+            }
+
+            public ExpectedDependency withReturnType(Class<?> returnType) {
+                return new ExpectedDependency(super.owner, returnType, description(returnType));
+            }
+
+            private String description(Class<?> returnType) {
+                return String.format("Method.*%s\\.%s.*%s.*%s.*\\.java:%d.*",
+                        super.owner.getName(), super.methodName, "has return type", returnType.getName(), 0);
+            }
+        }
+    }
+
+    public static class ConstructorParameterCreator {
+        private final Class<?> owner;
+        private final String constructorName;
+
+        public ConstructorParameterCreator(Class<?> owner, String constructorName) {
+            this.owner = owner;
+            this.constructorName = constructorName;
+        }
+
+        public ExpectedDependency hasParameter(Class<?> targetParameter) {
+            return new ExpectedDependency(owner, targetParameter, description(targetParameter));
+        }
+
+        //TODO: refactor all these stupid descriptions?
+        private String description(Class<?> targetParameter) {
+            return String.format("Constructor.*%s\\.%s.*%s.*%s.*\\.java:%d.*",
+                    owner.getName(), constructorName, "has parameter of type", targetParameter.getName(), 0);
         }
     }
 }

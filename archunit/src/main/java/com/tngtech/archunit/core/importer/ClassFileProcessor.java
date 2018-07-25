@@ -56,6 +56,7 @@ class ClassFileProcessor {
                 importRecord.addAll(javaClassProcessor.createJavaClass().asSet());
             } catch (Exception e) {
                 LOG.warn(String.format("Couldn't import class from %s", location.getUri()), e);
+                //TODO: I get a warning here and sometimes a failure when running archUnit.tests
             }
         }
         return new ClassGraphCreator(importRecord, getClassResolver(classDetailsRecorder)).complete();
