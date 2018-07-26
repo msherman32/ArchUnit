@@ -695,7 +695,7 @@ public class JavaClassTest {
 
     private static DependencyConditionCreation extendsDependency() {
         return new DependencyConditionCreation("Class", "extends");
-    }//TODO: make this Class ... extends?
+    }
 
     private static DependencyConditionCreation hasFieldDependency() {
         return new DependencyConditionCreation("Field", "is of type");
