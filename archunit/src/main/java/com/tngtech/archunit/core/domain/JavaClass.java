@@ -522,7 +522,8 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
      */
     @PublicAPI(usage = ACCESS)
     public Set<Dependency> getDirectDependenciesFromSelf() {
-        ImmutableSet.Builder<Dependency> result = dependenciesFromAccesses(getAccessesFromSelf());
+        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
+        result.addAll(dependenciesFromAccesses(getAccessesFromSelf()));
         result.addAll(dependenciesFromInheritance());
         result.addAll(dependenciesFromFields());
         result.addAll(dependenciesFromMethodReturnTypes());
@@ -539,7 +540,8 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
      */
     @PublicAPI(usage = ACCESS)
     public Set<Dependency> getDirectDependenciesToSelf() {
-        ImmutableSet.Builder<Dependency> result = dependenciesFromAccesses(getAccessesToSelf());
+        ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
+        result.addAll(dependenciesFromAccesses(getAccessesToSelf()));
         for (JavaClass subClass : getSubClasses()) {
             result.add(Dependency.fromInheritance(subClass, this));
         }
@@ -748,12 +750,12 @@ public class JavaClass implements HasName, HasAnnotations, HasModifiers {
         return getSimpleName().isEmpty();
     }
 
-    private ImmutableSet.Builder<Dependency> dependenciesFromAccesses(Set<JavaAccess<?>> accesses) {
+    private Set<Dependency> dependenciesFromAccesses(Set<JavaAccess<?>> accesses) {
         ImmutableSet.Builder<Dependency> result = ImmutableSet.builder();
         for (JavaAccess<?> access : filterNoSelfAccess(accesses)) {
             result.add(Dependency.from(access));
         }
-        return result;
+        return result.build();
     }
 
     private Set<Dependency> dependenciesFromInheritance() {
