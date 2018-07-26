@@ -690,12 +690,12 @@ public class JavaClassTest {
     }
 
     private static DependencyConditionCreation implementsDependency() {
-        return new DependencyConditionCreation("", "implements");
+        return new DependencyConditionCreation("Class", "implements");
     }
 
     private static DependencyConditionCreation extendsDependency() {
-        return new DependencyConditionCreation("", "extends");
-    }//TODO: make this Class ... extends
+        return new DependencyConditionCreation("Class", "extends");
+    }//TODO: make this Class ... extends?
 
     private static DependencyConditionCreation hasFieldDependency() {
         return new DependencyConditionCreation("Field", "is of type");

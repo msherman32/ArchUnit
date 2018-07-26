@@ -93,7 +93,7 @@ public abstract class JavaCodeUnit extends JavaMember implements HasParameterTyp
     @PublicAPI(usage = ACCESS)
     public boolean isConstructor() {
         return false;
-    } //TODO: make this abstract
+    }
 
     AccessContext.Part completeFrom(ImportContext context) {
         fieldAccesses = context.getFieldAccessesFor(this);

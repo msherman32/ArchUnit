@@ -77,19 +77,23 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
 
     static Dependency fromParameter(JavaConstructor constructor, JavaClass parameter) {
         return createDependencyFromJavaMember("Constructor", constructor, "has parameter of type", parameter);
-    } //TODO: change this for constructor or method?
+    }
 
     private static Dependency createDependency(JavaClass origin, String dependencyType, JavaClass target) {
-        String dependencyDescription = Joiner.on(" ").join(origin.getName(), dependencyType, target.getName());
-        String description = dependencyDescription + " in " + formatLocation(origin, 0);
+            String dependencyDescription = Joiner.on(" ").join(bracketFormat(origin.getName()), dependencyType, bracketFormat(target.getName()));
+            String description = "Class " + dependencyDescription + " in " + formatLocation(origin, 0);
         return new Dependency(origin, target, 0, description);
     }
 
     private static Dependency createDependencyFromJavaMember(String memberType, JavaMember origin, String dependencyType, JavaClass target) {
         String dependencyDescription = Joiner.on(" ").join(
-                memberType, origin.getFullName(), dependencyType, target.getName());
+                memberType, bracketFormat(origin.getFullName()), dependencyType, bracketFormat(target.getName()));
         String description = dependencyDescription + " in " + formatLocation(origin.getOwner(), 0);
         return new Dependency(origin.getOwner(), target, 0, description);
+    }
+
+    private static String bracketFormat(String name) {
+        return "<" + name + ">";
     }
 
     @PublicAPI(usage = ACCESS)

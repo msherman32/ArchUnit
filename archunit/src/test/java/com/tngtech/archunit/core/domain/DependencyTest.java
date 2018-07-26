@@ -114,8 +114,8 @@ public class DependencyTest {
     private void assertDependency(JavaClass target, Dependency dependency, String dependencyType) {
         assertThat(dependency.getTargetClass()).as("target class").isEqualTo(target);
         assertThat(dependency.getDescription()).as("description").isEqualTo(
-                getClass().getName() + " " + dependencyType + " " + target.getName() +
-                        " in (" + getClass().getSimpleName() + ".java:0)");
+                "Class <" + getClass().getName() + "> " + dependencyType + " <" + target.getName() +
+                        "> in (" + getClass().getSimpleName() + ".java:0)");
     }
 
     @Override
