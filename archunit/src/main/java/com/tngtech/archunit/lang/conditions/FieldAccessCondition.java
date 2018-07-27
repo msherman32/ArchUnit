@@ -33,7 +33,6 @@ import static java.util.Collections.singleton;
 
 class FieldAccessCondition extends ArchCondition<JavaFieldAccess> {
     private final DescribedPredicate<? super JavaFieldAccess> fieldAccessIdentifier;
-    private final String descriptionTemplate;
 
     FieldAccessCondition(DescribedPredicate<? super JavaFieldAccess> fieldAccessIdentifier) {
         this(fieldAccessIdentifier, EnumSet.allOf(AccessType.class));
@@ -44,12 +43,11 @@ class FieldAccessCondition extends ArchCondition<JavaFieldAccess> {
                 fieldAccessIdentifier.getDescription(), accessTypes));
 
         this.fieldAccessIdentifier = fieldAccessIdentifier;
-        this.descriptionTemplate = getDescriptionTemplateFor(accessTypes);
     }
 
     @Override
     public void check(JavaFieldAccess item, ConditionEvents events) {
-        String message = item.getDescriptionWithTemplate(descriptionTemplate);
+        String message = item.getDescriptionWithTemplate();
         events.add(new SimpleConditionEvent(item, fieldAccessIdentifier.apply(item), message));
     }
 

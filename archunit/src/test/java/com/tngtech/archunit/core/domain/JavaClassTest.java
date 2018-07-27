@@ -682,7 +682,7 @@ public class JavaClassTest {
 
     //TODO: I used to have a parameter for memberDescription here. Add this back?
     private static DependencyConditionCreation callDependency() {
-        return new DependencyConditionCreation("", "calls");
+        return new DependencyConditionCreation("SOMETHING", "calls");
     }
 
     private static DependencyConditionCreation setFieldDependency() {

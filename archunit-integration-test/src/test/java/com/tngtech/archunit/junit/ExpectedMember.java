@@ -23,8 +23,6 @@ abstract class ExpectedMember {
     private final Class<?> clazz;
     private final String memberName;
     private final List<String> params = new ArrayList<>();
-    private final String memberDescription;
-    //TODO: add a string here
 
     ExpectedMember(Class<?> clazz, String memberName, Class<?>[] paramTypes) {
         this.clazz = clazz;
@@ -32,7 +30,6 @@ abstract class ExpectedMember {
         for (Class<?> paramType : paramTypes) {
             params.add(paramType.getName());
         }
-        this.memberDescription = "fix this"; //TODO: fix this
     }
 
     String lineMessage(int number) {
@@ -69,8 +66,15 @@ abstract class ExpectedMember {
     }
 
     static class ExpectedOrigin extends ExpectedMember {
-        ExpectedOrigin(Class<?> clazz, String methodName, Class<?>[] paramTypes) {
+        private final String memberDescription;
+
+        ExpectedOrigin(String memberDescription, Class<?> clazz, String methodName, Class<?>[] paramTypes) {
             super(clazz, methodName, paramTypes);
+            this.memberDescription = memberDescription;
+        }
+
+        String getMemberDescription() {
+            return memberDescription;
         }
 
         @Override
@@ -79,20 +83,23 @@ abstract class ExpectedMember {
         }
     }
 
-    abstract static class ExpectedTarget extends ExpectedMember {
-        private ExpectedTarget(Class<?> clazz, String memberName, Class<?>[] paramTypes) {
+    abstract static class ExpectedAccess extends ExpectedMember {
+        private final ExpectedOrigin expectedOrigin;
+
+        private ExpectedAccess(ExpectedOrigin expectedOrigin, Class<?> clazz, String memberName, Class<?>[] paramTypes) {
             super(clazz, memberName, paramTypes);
+            this.expectedOrigin = expectedOrigin;
         }
 
-        String messageFor(ExpectedAccess access) {
+        String messageFor(com.tngtech.archunit.junit.ExpectedAccess access) {
             return String.format(template(),
-                    access.getOrigin(), access.getTarget(), access.getOrigin().lineMessage(access.getLineNumber()));
+                    expectedOrigin.getMemberDescription(), access.getOrigin(), access.getTarget(), access.getOrigin().lineMessage(access.getLineNumber()));
         }
 
         abstract String template();
     }
 
-    static class ExpectedFieldTarget extends ExpectedTarget {
+    static class ExpectedFieldAccess extends ExpectedAccess {
         private final Map<Set<JavaFieldAccess.AccessType>, String> accessDescription = ImmutableMap.of(
                 singleton(JavaFieldAccess.AccessType.GET), "gets",
                 singleton(JavaFieldAccess.AccessType.SET), "sets",
@@ -101,27 +108,26 @@ abstract class ExpectedMember {
 
         private final String accesses;
 
-        ExpectedFieldTarget(Class<?> clazz, String memberName, ImmutableSet<JavaFieldAccess.AccessType> accessTypes) {
-            super(clazz, memberName, new Class<?>[0]);
+        ExpectedFieldAccess(ExpectedOrigin expectedOrigin, Class<?> clazz, String memberName, ImmutableSet<JavaFieldAccess.AccessType> accessTypes) {
+            super(expectedOrigin, clazz, memberName, new Class<?>[0]);
             this.accesses = accessDescription.get(accessTypes);
         }
 
         @Override
         String template() {
-            return "Method <%s> " + accesses + " field <%s> in %s";
+            return "%s <%s> " + accesses + " field <%s> in %s";
         }
-    }        //TODO: change this accordingly to Constructor or Method
+    }
 
-    static class ExpectedMethodTarget extends ExpectedTarget {
-        ExpectedMethodTarget(Class<?> clazz, String memberName, Class<?>[] paramTypes) {
-            super(clazz, memberName, paramTypes);
+    static class ExpectedMethodAccess extends ExpectedAccess {
+        ExpectedMethodAccess(ExpectedOrigin expectedOrigin, Class<?> clazz, String memberName, Class<?>[] paramTypes) {
+            super(expectedOrigin, clazz, memberName, paramTypes);
         }
 
         @Override
         String template() {
-            return "Method <%s> calls method <%s> in %s";
+            return "%s <%s> calls method <%s> in %s";
         }
-        //TODO: change this accordingly to Constructor or Method
 
         @Override
         public String toString() {
@@ -129,15 +135,14 @@ abstract class ExpectedMember {
         }
     }
 
-    static class ExpectedConstructorTarget extends ExpectedMethodTarget {
-        ExpectedConstructorTarget(Class<?> clazz, Class<?>[] paramTypes) {
-            super(clazz, CONSTRUCTOR_NAME, paramTypes);
+    static class ExpectedConstructorAccess extends ExpectedMethodAccess {
+        ExpectedConstructorAccess(ExpectedOrigin expectedOrigin, Class<?> clazz, Class<?>[] paramTypes) {
+            super(expectedOrigin, clazz, CONSTRUCTOR_NAME, paramTypes);
         }
 
         @Override
         String template() {
-            return "Method <%s> calls constructor <%s> in %s";
+            return "%s <%s> calls constructor <%s> in %s";
         }
-        //TODO: change this accordingly to Constructor or Method PARAMETERIZE THESE
     }
 }

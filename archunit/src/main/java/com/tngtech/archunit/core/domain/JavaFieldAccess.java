@@ -34,9 +34,9 @@ import static com.tngtech.archunit.core.domain.JavaFieldAccess.AccessType.GET;
 import static com.tngtech.archunit.core.domain.JavaFieldAccess.AccessType.SET;
 
 public class JavaFieldAccess extends JavaAccess<FieldAccessTarget> {
-    private static final Map<AccessType, String> MESSAGE_TEMPLATE = ImmutableMap.of(
-            GET, "Method <%s> gets field <%s>",
-            SET, "Method <%s> sets field <%s>");
+    private static final Map<AccessType, String> MESSAGE_VERB = ImmutableMap.of(
+            GET, "gets",
+            SET, "sets");
     //TODO: take out or keep these "Method "?
 
     private final AccessType accessType;
@@ -74,16 +74,16 @@ public class JavaFieldAccess extends JavaAccess<FieldAccessTarget> {
     }
 
     @Override
-    protected String descriptionTemplate() {
-        return MESSAGE_TEMPLATE.get(accessType);
+    protected String descriptionVerb() {
+        return MESSAGE_VERB.get(accessType);
     }
 
     @Internal
     public static String getDescriptionTemplateFor(Set<AccessType> accessTypes) {
         return accessTypes.size() == 1
-                ? MESSAGE_TEMPLATE.get(getOnlyElement(accessTypes))
-                : "Method <%s> accesses field <%s>";
-    }   //TODO: change this back to Method
+                ? MESSAGE_VERB.get(getOnlyElement(accessTypes))
+                : "accesses";
+    }
 
     public enum AccessType {
         @PublicAPI(usage = ACCESS)
