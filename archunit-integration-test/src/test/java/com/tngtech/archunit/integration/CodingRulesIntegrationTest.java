@@ -11,6 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static com.tngtech.archunit.junit.ExpectedAccess.accessFromMethod;
+import static com.tngtech.archunit.junit.ExpectedAccess.accessFromStaticInitializer;
 import static com.tngtech.archunit.junit.ExpectedAccess.callFromMethod;
 
 public class CodingRulesIntegrationTest extends CodingRulesTest {
@@ -86,7 +87,7 @@ public class CodingRulesIntegrationTest extends CodingRulesTest {
     @CalledByArchUnitIntegrationTestRunner
     public static void expectViolationByUsingJavaUtilLogging(ExpectsViolations expectsViolations) {
         expectsViolations.ofRule("no classes should use java.util.logging")
-                .by(accessFromMethod(ClassViolatingCodingRules.class, "<clinit>")
+                .by(accessFromStaticInitializer(ClassViolatingCodingRules.class)
                         .setting().field(ClassViolatingCodingRules.class, "log")
                         .inLine(9));
     }

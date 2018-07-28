@@ -48,6 +48,8 @@ abstract class ExpectedMember {
         return clazz;
     }
 
+    abstract String getExpectedDescription();
+
     @Override
     public String toString() {
         return String.format("%s.%s", clazz.getName(), memberName);
@@ -73,8 +75,9 @@ abstract class ExpectedMember {
             this.memberDescription = memberDescription;
         }
 
-        String getMemberDescription() {
-            return memberDescription;
+        @Override
+        String getExpectedDescription() {
+            return memberDescription + " <" + toString() + ">";
         }
 
         @Override
@@ -83,23 +86,13 @@ abstract class ExpectedMember {
         }
     }
 
-    abstract static class ExpectedAccess extends ExpectedMember {
-        private final ExpectedOrigin expectedOrigin;
-
-        private ExpectedAccess(ExpectedOrigin expectedOrigin, Class<?> clazz, String memberName, Class<?>[] paramTypes) {
+    abstract static class ExpectedTarget extends ExpectedMember {
+        private ExpectedTarget(Class<?> clazz, String memberName, Class<?>[] paramTypes) {
             super(clazz, memberName, paramTypes);
-            this.expectedOrigin = expectedOrigin;
         }
-
-        String messageFor(com.tngtech.archunit.junit.ExpectedAccess access) {
-            return String.format(template(),
-                    expectedOrigin.getMemberDescription(), access.getOrigin(), access.getTarget(), access.getOrigin().lineMessage(access.getLineNumber()));
-        }
-
-        abstract String template();
     }
 
-    static class ExpectedFieldAccess extends ExpectedAccess {
+    static class ExpectedFieldAccess extends ExpectedTarget {
         private final Map<Set<JavaFieldAccess.AccessType>, String> accessDescription = ImmutableMap.of(
                 singleton(JavaFieldAccess.AccessType.GET), "gets",
                 singleton(JavaFieldAccess.AccessType.SET), "sets",
@@ -108,25 +101,25 @@ abstract class ExpectedMember {
 
         private final String accesses;
 
-        ExpectedFieldAccess(ExpectedOrigin expectedOrigin, Class<?> clazz, String memberName, ImmutableSet<JavaFieldAccess.AccessType> accessTypes) {
-            super(expectedOrigin, clazz, memberName, new Class<?>[0]);
+        ExpectedFieldAccess(Class<?> clazz, String memberName, ImmutableSet<JavaFieldAccess.AccessType> accessTypes) {
+            super(clazz, memberName, new Class<?>[0]);
             this.accesses = accessDescription.get(accessTypes);
         }
 
         @Override
-        String template() {
-            return "%s <%s> " + accesses + " field <%s> in %s";
+        String getExpectedDescription() {
+            return accesses + String.format(" field <%s>", toString());
         }
     }
 
-    static class ExpectedMethodAccess extends ExpectedAccess {
-        ExpectedMethodAccess(ExpectedOrigin expectedOrigin, Class<?> clazz, String memberName, Class<?>[] paramTypes) {
-            super(expectedOrigin, clazz, memberName, paramTypes);
+    static class ExpectedMethodTarget extends ExpectedTarget {
+        ExpectedMethodTarget(Class<?> clazz, String memberName, Class<?>[] paramTypes) {
+            super(clazz, memberName, paramTypes);
         }
 
         @Override
-        String template() {
-            return "%s <%s> calls method <%s> in %s";
+        String getExpectedDescription() {
+            return String.format("calls method <%s>", toString());
         }
 
         @Override
@@ -135,14 +128,19 @@ abstract class ExpectedMember {
         }
     }
 
-    static class ExpectedConstructorAccess extends ExpectedMethodAccess {
-        ExpectedConstructorAccess(ExpectedOrigin expectedOrigin, Class<?> clazz, Class<?>[] paramTypes) {
-            super(expectedOrigin, clazz, CONSTRUCTOR_NAME, paramTypes);
+    static class ExpectedConstructorTarget extends ExpectedTarget {
+        ExpectedConstructorTarget(Class<?> clazz, Class<?>[] paramTypes) {
+            super(clazz, CONSTRUCTOR_NAME, paramTypes);
         }
 
         @Override
-        String template() {
-            return "%s <%s> calls constructor <%s> in %s";
+        String getExpectedDescription() {
+            return String.format("calls constructor <%s>", toString());
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s(%s)", super.toString(), Joiner.on(", ").join(getParams()));
         }
     }
 }

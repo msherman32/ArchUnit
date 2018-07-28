@@ -4,19 +4,20 @@ import com.google.common.collect.ImmutableSet;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaAccess;
 import com.tngtech.archunit.core.domain.JavaFieldAccess;
-import com.tngtech.archunit.junit.ExpectedMember.ExpectedConstructorAccess;
-import com.tngtech.archunit.junit.ExpectedMember.ExpectedMethodAccess;
+import com.tngtech.archunit.junit.ExpectedMember.ExpectedConstructorTarget;
+import com.tngtech.archunit.junit.ExpectedMember.ExpectedMethodTarget;
 import com.tngtech.archunit.junit.ExpectedMember.ExpectedOrigin;
+import com.tngtech.archunit.junit.ExpectedMember.ExpectedTarget;
 
 import static com.tngtech.archunit.core.domain.JavaConstructor.CONSTRUCTOR_NAME;
 import static com.tngtech.archunit.core.domain.JavaStaticInitializer.STATIC_INITIALIZER_NAME;
 
 public abstract class ExpectedAccess implements ExpectedRelation {
     private final ExpectedOrigin origin;
-    private final ExpectedMember.ExpectedAccess target;
+    private final ExpectedTarget target;
     private final int lineNumber;
 
-    ExpectedAccess(ExpectedOrigin origin, ExpectedMember.ExpectedAccess target, int lineNumber) {
+    ExpectedAccess(ExpectedOrigin origin, ExpectedTarget target, int lineNumber) {
         this.origin = origin;
         this.target = target;
         this.lineNumber = lineNumber;
@@ -24,14 +25,19 @@ public abstract class ExpectedAccess implements ExpectedRelation {
 
     @Override
     public void associateLines(LineAssociation association) {
-        association.associateIfStringIsContained(target.messageFor(this));
+        association.associateIfStringIsContained(getExpectedMessage());
+    }
+
+    private String getExpectedMessage() {
+        String expectedLocation = String.format("(%s.java:%d)", origin.getDeclaringClass().getSimpleName(), lineNumber);
+        return origin.getExpectedDescription() + " " + target.getExpectedDescription() + " in " + expectedLocation;
     }
 
     ExpectedOrigin getOrigin() {
         return origin;
     }
 
-    ExpectedMember.ExpectedAccess getTarget() {
+    ExpectedTarget getTarget() {
         return target;
     }
 
@@ -41,7 +47,7 @@ public abstract class ExpectedAccess implements ExpectedRelation {
 
     @Override
     public String toString() {
-        return target.messageFor(this);
+        return getExpectedMessage();
     }
 
     public static ExpectedAccessViolationCreationProcess accessFromMethod(Class<?> origin, String method, Class<?>... paramTypes) {
@@ -90,20 +96,19 @@ public abstract class ExpectedAccess implements ExpectedRelation {
 
         public ExpectedCallViolationBuilder toMethod(Class<?> target, String member, Class<?>... paramTypes) {
             return new ExpectedCallViolationBuilder(
-                    origin, new ExpectedMethodAccess(target, member, paramTypes));
+                    origin, new ExpectedMethodTarget(target, member, paramTypes));
         }
 
         public ExpectedCallViolationBuilder toConstructor(Class<?> target, Class<?>... paramTypes) {
-            return new ExpectedCallViolationBuilder(
-                    origin, new ExpectedConstructorAccess(target, paramTypes));
+            return new ExpectedCallViolationBuilder(origin, new ExpectedConstructorTarget(target, paramTypes));
         }
     }
 
     private abstract static class ExpectedAccessViolationBuilder {
         final ExpectedOrigin origin;
-        final ExpectedMember.ExpectedAccess target;
+        final ExpectedTarget target;
 
-        private ExpectedAccessViolationBuilder(ExpectedOrigin origin, ExpectedMember.ExpectedAccess target) {
+        private ExpectedAccessViolationBuilder(ExpectedOrigin origin, ExpectedTarget target) {
             this.origin = origin;
             this.target = target;
         }
@@ -120,7 +125,7 @@ public abstract class ExpectedAccess implements ExpectedRelation {
 
         public ExpectedFieldAccessViolationBuilderStep2 field(Class<?> target, String member) {
             return new ExpectedFieldAccessViolationBuilderStep2(
-                    origin, new ExpectedMember.ExpectedFieldAccess(origin, target, member, accessType));
+                    origin, new ExpectedMember.ExpectedFieldAccess(target, member, accessType));
         }
     }
 
@@ -135,7 +140,7 @@ public abstract class ExpectedAccess implements ExpectedRelation {
     }
 
     public static class ExpectedCallViolationBuilder extends ExpectedAccessViolationBuilder {
-        private ExpectedCallViolationBuilder(ExpectedOrigin origin, ExpectedMethodAccess target) {
+        private ExpectedCallViolationBuilder(ExpectedOrigin origin, ExpectedTarget target) {
             super(origin, target);
         }
 
@@ -145,7 +150,7 @@ public abstract class ExpectedAccess implements ExpectedRelation {
     }
 
     public static class ExpectedFieldAccess extends ExpectedAccess {
-        private ExpectedFieldAccess(ExpectedOrigin origin, ExpectedMember.ExpectedAccess target, int lineNumber) {
+        private ExpectedFieldAccess(ExpectedOrigin origin, ExpectedTarget target, int lineNumber) {
             super(origin, target, lineNumber);
         }
 
@@ -158,7 +163,7 @@ public abstract class ExpectedAccess implements ExpectedRelation {
     }
 
     public static class ExpectedCall extends ExpectedAccess {
-        private ExpectedCall(ExpectedOrigin origin, ExpectedMember.ExpectedAccess target, int lineNumber) {
+        private ExpectedCall(ExpectedOrigin origin, ExpectedTarget target, int lineNumber) {
             super(origin, target, lineNumber);
         }
 
